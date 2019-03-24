@@ -171,11 +171,11 @@ func TestAccAWSCodeBuildProject_Cache(t *testing.T) {
 		CheckDestroy: testAccCheckAWSCodeBuildProjectDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccAWSCodeBuildProjectConfig_Cache(rName, "", "S3"),
+				Config:      testAccAWSCodeBuildProjectConfig_Cache(rName, "", "S3", nil),
 				ExpectError: regexp.MustCompile(`cache location is required when cache type is "S3"`),
 			},
 			{
-				Config: testAccAWSCodeBuildProjectConfig_Cache(rName, "", "NO_CACHE"),
+				Config: testAccAWSCodeBuildProjectConfig_Cache(rName, "", "NO_CACHE", nil),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSCodeBuildProjectExists(resourceName, &project),
 					resource.TestCheckResourceAttr(resourceName, "cache.#", "1"),
@@ -191,7 +191,7 @@ func TestAccAWSCodeBuildProject_Cache(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccAWSCodeBuildProjectConfig_Cache(rName, "some-bucket", "S3"),
+				Config: testAccAWSCodeBuildProjectConfig_Cache(rName, "some-bucket", "S3", nil),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSCodeBuildProjectExists(resourceName, &project),
 					resource.TestCheckResourceAttr(resourceName, "cache.#", "1"),
@@ -200,7 +200,7 @@ func TestAccAWSCodeBuildProject_Cache(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccAWSCodeBuildProjectConfig_Cache(rName, "some-new-bucket", "S3"),
+				Config: testAccAWSCodeBuildProjectConfig_Cache(rName, "some-new-bucket", "S3", nil),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSCodeBuildProjectExists(resourceName, &project),
 					resource.TestCheckResourceAttr(resourceName, "cache.#", "1"),
@@ -1071,7 +1071,7 @@ resource "aws_codebuild_project" "test" {
 `, buildTimeout, rName)
 }
 
-func testAccAWSCodeBuildProjectConfig_Cache(rName, cacheLocation, cacheType string) string {
+func testAccAWSCodeBuildProjectConfig_Cache(rName, cacheLocation, cacheType string, cacheModes []string) string {
 	return testAccAWSCodeBuildProjectConfig_Base_ServiceRole(rName) + fmt.Sprintf(`
 resource "aws_codebuild_project" "test" {
   name         = "%s"
@@ -1084,6 +1084,7 @@ resource "aws_codebuild_project" "test" {
   cache {
     location = "%s"
     type     = "%s"
+    modes    = %v
   }
 
   environment {
@@ -1097,7 +1098,7 @@ resource "aws_codebuild_project" "test" {
     location = "https://github.com/hashicorp/packer.git"
   }
 }
-`, rName, cacheLocation, cacheType)
+`, rName, cacheLocation, cacheType, cacheModes)
 }
 
 func testAccAWSCodeBuildProjectConfig_Description(rName, description string) string {
