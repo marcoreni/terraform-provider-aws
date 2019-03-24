@@ -97,6 +97,7 @@ func resourceAwsCodeBuildProject() *schema.Resource {
 							Optional: true,
 							Default:  codebuild.CacheTypeNoCache,
 							ValidateFunc: validation.StringInSlice([]string{
+								codebuild.CacheTypeLocal,
 								codebuild.CacheTypeNoCache,
 								codebuild.CacheTypeS3,
 							}, false),
@@ -104,6 +105,18 @@ func resourceAwsCodeBuildProject() *schema.Resource {
 						"location": {
 							Type:     schema.TypeString,
 							Optional: true,
+						},
+						"modes": {
+							Type:     schema.TypeSet,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+								ValidateFunc: validation.StringInSlice([]string{
+									codebuild.CacheModeLocalCustomCache,
+									codebuild.CacheModeLocalDockerLayerCache,
+									codebuild.CacheModeLocalSourceCache,
+								}, false),
+							},
 						},
 					},
 				},
@@ -614,6 +627,8 @@ func expandProjectCache(s []interface{}) *codebuild.ProjectCache {
 		projectCache.Location = aws.String(v.(string))
 	}
 
+	projectCache.Modes = expandStringList(data["modes"].(*schema.Set).List())
+
 	return projectCache
 }
 
@@ -998,6 +1013,7 @@ func flattenAwsCodebuildProjectCache(cache *codebuild.ProjectCache) []interface{
 	values := map[string]interface{}{
 		"location": aws.StringValue(cache.Location),
 		"type":     aws.StringValue(cache.Type),
+		"modes":    flattenStringSet(cache.Modes),
 	}
 
 	return []interface{}{values}
